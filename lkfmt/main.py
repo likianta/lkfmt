@@ -1,6 +1,5 @@
 import os
 import typing as t
-from difflib import ndiff
 
 import autoflake
 import black
@@ -11,29 +10,32 @@ from lk_utils import fs
 from lk_utils import loads
 from lk_utils import xpath
 
+from .diff import T
+from .diff import stat_changes
+
 lk_logger.setup(quiet=True, show_funcname=False, show_varnames=False)
 
 
 class Cache:
     _cache: dict  # dict[path, mtime]
     _file: str
-
+    
     def __init__(self):
         self._file = xpath('.cache.pkl')
         if os.path.exists(self._file):
             self._cache = loads(self._file)
         else:
             self._cache = {}
-
+    
     def get(self, path: str) -> t.Union[float, 0]:
         return self._cache.get(path, 0)
-
+    
     def set(self, path: str, mtime: float) -> None:
         self._cache[path] = mtime
-
+    
     def save(self) -> None:
         dumps(self._cache, self._file)
-
+    
     def disable(self) -> None:
         self._cache.clear()
         setattr(self, 'save', lambda: None)
@@ -43,7 +45,7 @@ _cache = Cache()
 _debug = False
 
 
-def fmt(
+def fmt_all(
     target: str = '.',
     recursive: bool = False,
     inplace: bool = True,
@@ -69,10 +71,10 @@ def fmt(
     if backdoor.get('direct_to_fmt_file'):
         fmt_file(target, inplace, chdir)
         return
-
+    
     root: str
     files: t.Iterable[str]
-
+    
     if target == '.':
         root = fs.abspath(os.getcwd())
     elif os.path.isdir(target):
@@ -83,7 +85,7 @@ def fmt(
         return
     else:
         raise ValueError(f'invalid target: {target}')
-
+    
     if no_cache:
         _cache.disable()
     if recursive:
@@ -104,7 +106,7 @@ def fmt(
     else:
         print('[green dim]no file modified[/]', ':rt')
         return
-
+    
     cnt = 0
     for f in files:
         _, (i, u, d) = fmt_file(f, inplace, chdir, quiet=True)
@@ -141,17 +143,17 @@ def fmt(
 
 def fmt_file(
     file: str, inplace: bool = True, chdir: bool = False, quiet: bool = False
-) -> t.Tuple[str, t.Tuple[int, int, int]]:
+) -> t.Tuple[str, T.Changes]:
     if quiet:
         lk_logger.mute()
     print(':v2s', file)
     assert file.endswith(('.py', '.txt'))
     if chdir:
         os.chdir(os.path.dirname(os.path.abspath(file)))
-
+    
     with open(file, 'r', encoding='utf-8') as f:
         code = origin_code = f.read()
-
+    
     code = black.format_str(
         code,
         mode=black.Mode(
@@ -177,16 +179,16 @@ def fmt_file(
         ignore_pass_statements=False,
         ignore_pass_after_docstring=False,
     )
-
+    
     if code == origin_code:
         print('[green dim]no code change[/]', ':rt')
         return code, (0, 0, 0)
-
+    
     if inplace:
         with open(file, 'w', encoding='utf-8') as f:
             f.write(code)
-
-    i, u, d = _stat(origin_code, code)
+    
+    i, u, d = stat_changes(origin_code, code, verbose=False)
     print(
         '[green]reformat code done: '
         '[cyan {dim_i}][u]{i}[/] insertions,[/] '
@@ -205,21 +207,3 @@ def fmt_file(
     if quiet:
         lk_logger.unmute()
     return code, (i, u, d)
-
-
-def _stat(old: str, new: str) -> t.Tuple[int, int, int]:
-    """
-    returns:
-        tuple[insertions, updates, deletions]
-    """
-    insertions = updates = deletions = 0
-    for d in ndiff(old.splitlines(), new.splitlines(keepends=False)):
-        if _debug:
-            print(':vi2', d)
-        if d.startswith('+'):
-            insertions += 1
-        elif d.startswith('-'):
-            deletions += 1
-        elif d.startswith('?'):
-            updates += 1
-    return insertions, updates, deletions
