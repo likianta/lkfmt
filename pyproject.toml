@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "lkfmt"
+version = "0.1.0b8"
+description = ""
+authors = ["likianta <likianta@foxmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+argsense = "*"
+autoflake = "*"
+black = "*"
+isort = "*"
+lk-logger = "*"
+# lk-utils = "*"
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+priority = "default"
+
+[tool.poetry.scripts]
+lkfmt = 'lkfmt.__main__:_exec'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
