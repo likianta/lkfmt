@@ -16,3 +16,11 @@
     - align `=` in multi-line assignments
     - tweak `black` styles to balance the visual weight to ease your eyes
     - use `# nofmt` to skip formatting (like `# noqa`)
+
+## Installation
+
+<strike><code>pip install lkfmt</code></strike> (not yet published)
+
+```sh
+pip install git+https://github.com/likianta/lkfmt.git
+```
