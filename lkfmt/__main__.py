@@ -1,4 +1,3 @@
-import sys
 from argsense import cli
 
 from .main import fmt

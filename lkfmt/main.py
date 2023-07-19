@@ -1,11 +1,13 @@
 import os
+import typing as t
+from difflib import ndiff
 
 import autoflake
 import black
 import isort
 import lk_logger
 
-lk_logger.setup(quiet=True, show_varnames=True)
+lk_logger.setup(quiet=True, show_funcname=False, show_varnames=True)
 
 
 def fmt(file: str, inplace: bool = True, chdir: bool = False) -> str:
@@ -56,5 +58,36 @@ def fmt(file: str, inplace: bool = True, chdir: bool = False) -> str:
         with open(file, 'w', encoding='utf-8') as f:
             f.write(code)
 
-    print('[green]reformat code done[/]', ':rt')
+    i, u, d = _stat(origin_code, code)
+    print(
+        '[green]reformat code done: '
+        '[cyan {dim_i}][u]{i}[/] insertions,[/] '
+        '[yellow {dim_u}][u]{u}[/] updates,[/] '
+        '[red {dim_d}][u]{d}[/] deletions[/]'
+        '[/]'.format(
+            dim_i='dim' if not i else '',
+            dim_u='dim' if not u else '',
+            dim_d='dim' if not d else '',
+            i=i,
+            u=u,
+            d=d,
+        ),
+        ':rt',
+    )
     return code
+
+
+def _stat(old: str, new: str) -> t.Tuple[int, int, int]:
+    """
+    returns:
+        tuple[insertions, updates, deletions]
+    """
+    insertions = updates = deletions = 0
+    for d in ndiff(old.splitlines(), new.splitlines(keepends=False)):
+        if d.startswith('+'):
+            insertions += 1
+        elif d.startswith('-'):
+            deletions += 1
+        elif d.startswith('?'):
+            updates += 1
+    return insertions, updates, deletions
