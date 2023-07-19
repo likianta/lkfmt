@@ -33,13 +33,14 @@ class Cache:
 
     def save(self) -> None:
         dumps(self._cache, self._file)
-        
+
     def disable(self) -> None:
         self._cache.clear()
         setattr(self, 'save', lambda: None)
 
 
 _cache = Cache()
+_debug = False
 
 
 def fmt(
@@ -48,13 +49,27 @@ def fmt(
     inplace: bool = True,
     chdir: bool = False,
     no_cache: bool = False,
+    **backdoor,
 ) -> None:
     """
+    reformat one or many python files in likianta flavored style.
+
     kwargs:
         recursive (-r):
         inplace (-i):
         chdir (-c):
+    backdoor: for third-party tool to quick access.
+        debug: bool[False]. print more info in process.
+        direct_to_fmt_file: bool[False]. directly call `fmt_file`.
     """
+    if backdoor.get('debug'):
+        global _debug
+        _debug = True
+        print(f'{backdoor = }', ':v')
+    if backdoor.get('direct_to_fmt_file'):
+        fmt_file(target, inplace, chdir)
+        return
+
     root: str
     files: t.Iterable[str]
 
@@ -68,7 +83,7 @@ def fmt(
         return
     else:
         raise ValueError(f'invalid target: {target}')
-    
+
     if no_cache:
         _cache.disable()
     if recursive:
@@ -199,6 +214,8 @@ def _stat(old: str, new: str) -> t.Tuple[int, int, int]:
     """
     insertions = updates = deletions = 0
     for d in ndiff(old.splitlines(), new.splitlines(keepends=False)):
+        if _debug:
+            print(':vi2', d)
         if d.startswith('+'):
             insertions += 1
         elif d.startswith('-'):
