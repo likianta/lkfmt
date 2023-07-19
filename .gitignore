@@ -1,5 +1,6 @@
 /.idea/
 /dist/
+/lkfmt/.cache.pkl
 /lkfmt/lk_flavor.py
 __pycache__/
 .DS_Store

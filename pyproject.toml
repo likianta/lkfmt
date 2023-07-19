@@ -1,6 +1,7 @@
 [tool.poetry]
 name = "lkfmt"
-version = "0.1.0"
+version = "0.2.0a2"
+homepage = "https://github.com/likianta/lkfmt"
 description = "All-in-one Python code formattor which is tailored of `black` + `isort` + `autoflake` for myself taste."
 readme = "README.md"
 authors = ["likianta <likianta@foxmail.com>"]
@@ -13,7 +14,7 @@ autoflake = "*"
 black = "*"
 isort = "*"
 lk-logger = "*"
-# lk-utils = "*"
+lk-utils = "*"
 
 [[tool.poetry.source]]
 name = "tsinghua"
