@@ -10,11 +10,11 @@
 - one command to drive
 - additional format styles by lk-flavor (*work in progress*)
     - keep indents on empty lines
-    - keep newline at end of file
+    - ensure newline at end of file
     - merge one-line `if`/`for` statements
     - align `:` in dict key-value pairs
     - align `=` in multi-line assignments
-    - tweak `black` styles to balance the visual weight to ease your eyes
+    - **tweak `black` styles to balance the visual weight**
     - use `# nofmt` to skip formatting (like `# noqa`)
 
 ## Installation
