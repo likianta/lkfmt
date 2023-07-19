@@ -1,7 +1,8 @@
 [tool.poetry]
 name = "lkfmt"
-version = "0.1.0b8"
-description = ""
+version = "0.1.0b10"
+description = "All-in-one Python code formattor which is tailored of `black` + `isort` + `autoflake` for myself taste."
+readme = "README.md"
 authors = ["likianta <likianta@foxmail.com>"]
 license = "MIT"
 
@@ -20,7 +21,7 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
 priority = "default"
 
 [tool.poetry.scripts]
-lkfmt = 'lkfmt.__main__:_exec'
+lkfmt = 'lkfmt.__main__:_shortcut'
 
 [build-system]
 requires = ["poetry-core"]
