@@ -113,8 +113,8 @@ def fmt_all(
         return
         
     def estimate_best_column_width(files: t.List[str]) -> int:
-        max_width = max(map(len, map(fs.filename, files)))
-        return min((max_width, lk_logger.console.console.width))
+        maxlen = max(map(len, map(fs.filename, files)))
+        return min((maxlen, 80, lk_logger.console.console.width))
     
     file_col_width = estimate_best_column_width(files)
     cnt = 0
