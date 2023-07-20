@@ -24,3 +24,15 @@
 ```sh
 pip install git+https://github.com/likianta/lkfmt.git
 ```
+
+## Usage
+
+...
+
+## Screenshots
+
+![](./.assets/125742.png)
+
+![](./.assets/125758.png)
+
+![](./.assets/125801.png)

@@ -13,4 +13,4 @@
 
 ### 0.1.0 (2023-07-19)
 
-- proove of concept (black + isort + autoflake)
+- proof of concept (black + isort + autoflake)
