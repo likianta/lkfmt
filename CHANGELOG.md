@@ -6,7 +6,7 @@
     - keep indents on empty lines
     - ensure newline at end of file
 
-### 0.2.0 (wip)
+### 0.2.0 (2023-07-20)
 
 - enrich CLI
 - advanced diff
