@@ -77,7 +77,7 @@ def show_diff(a: str, b: str) -> None:
 
 
 def _diff(a: t.Sequence[str], b: t.Sequence[str]) -> T.Diffs0:
-    from .main import _debug
+    from .formatter import _debug
     out: T.Diffs0 = []
     for diff in ndiff(a, b):
         mask, line = diff[0], diff[2:].replace('\n', '')

@@ -2,8 +2,8 @@ from argsense import cli
 from lk_utils import loads
 
 from . import diff
-from .main import fmt_all
-from .main import fmt_one
+from .formatter import fmt_all
+from .formatter import fmt_one
 
 cli.add_cmd(fmt_all, name='fmt')
 
