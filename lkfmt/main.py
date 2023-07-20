@@ -72,7 +72,7 @@ def fmt_all(
         _debug = True
         print(f'{backdoor = }', ':v')
     if backdoor.get('direct_to_fmt_file'):
-        fmt_file(target, inplace, chdir)
+        fmt_one(target, inplace, chdir)
         return
     
     root: str
@@ -84,7 +84,7 @@ def fmt_all(
         root = fs.abspath(target)
     elif os.path.isfile(target):
         _cache.set(target, os.path.getmtime(target))
-        fmt_file(target, inplace, chdir)
+        fmt_one(target, inplace, chdir)
         return
     else:
         raise ValueError(f'invalid target: {target}')
@@ -119,7 +119,7 @@ def fmt_all(
     file_col_width = estimate_best_column_width(files)
     cnt = 0
     for f in files:
-        _, (i, u, d) = fmt_file(f, inplace, chdir, quiet=True)
+        _, (i, u, d) = fmt_one(f, inplace, chdir, quiet=True)
         if (i, u, d) != (0, 0, 0):
             cnt += 1
         print(
@@ -151,7 +151,7 @@ def fmt_all(
     _cache.save()
 
 
-def fmt_file(
+def fmt_one(
     file: str, inplace: bool = True, chdir: bool = False, quiet: bool = False
 ) -> t.Tuple[str, T.Changes]:
     if quiet:
