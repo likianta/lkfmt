@@ -63,9 +63,12 @@ def fmt_all(
     backdoor: for third-party tool to quick access.
         debug: bool[False]. print more info in process.
         direct_to_fmt_file: bool[False]. directly call `fmt_file`.
+        show_diff: bool[False]. show diff after reformat. (not implemented)
+            [red]careful using this option, it may dump too much info -
+            overwhelming your terminal.[/]
     """
+    global _debug
     if backdoor.get('debug'):
-        global _debug
         _debug = True
         print(f'{backdoor = }', ':v')
     if backdoor.get('direct_to_fmt_file'):
@@ -73,7 +76,7 @@ def fmt_all(
         return
     
     root: str
-    files: t.Iterable[str]
+    files: t.List[str]
     
     if target == '.':
         root = fs.abspath(os.getcwd())
@@ -103,10 +106,17 @@ def fmt_all(
             _cache.set(f, m)
     if temp:
         files = temp
+        if _debug:
+            print(files, ':vl')
     else:
         print('[green dim]no file modified[/]', ':rt')
         return
+        
+    def estimate_best_column_width(files: t.List[str]) -> int:
+        max_width = max(map(len, map(fs.filename, files)))
+        return min((max_width, lk_logger.console.console.width))
     
+    file_col_width = estimate_best_column_width(files)
     cnt = 0
     for f in files:
         _, (i, u, d) = fmt_file(f, inplace, chdir, quiet=True)
@@ -114,21 +124,21 @@ def fmt_all(
             cnt += 1
         print(
             ':ir',
-            'reformat done: {} ({})'.format(
-                fs.relpath(f, root),
+            '[green]reformat done: {} ({})[/]'.format(
+                fs.relpath(f, root).ljust(file_col_width),
                 (
                     '[green dim]no code change[/]'
                     if (i, u, d) == (0, 0, 0)
                     else (
-                        '[cyan {dim_i}][u]{i}[/] insertions,[/] '
-                        '[yellow {dim_u}][u]{u}[/] updates,[/] '
-                        '[red {dim_d}][u]{d}[/] deletions[/]'.format(
+                        '[cyan {dim_i}]{i} insertions,[/] '
+                        '[yellow {dim_u}]{u} updates,[/] '
+                        '[red {dim_d}]{d} deletions[/]'.format(
                             dim_i='dim' if not i else '',
                             dim_u='dim' if not u else '',
                             dim_d='dim' if not d else '',
-                            i=i,
-                            u=u,
-                            d=d,
+                            i=str(i).rjust(2),
+                            u=str(u).rjust(2),
+                            d=str(d).rjust(2),
                         )
                     )
                 ),
@@ -191,16 +201,16 @@ def fmt_file(
     i, u, d = stat_changes(origin_code, code, verbose=False)
     print(
         '[green]reformat code done: '
-        '[cyan {dim_i}][u]{i}[/] insertions,[/] '
-        '[yellow {dim_u}][u]{u}[/] updates,[/] '
-        '[red {dim_d}][u]{d}[/] deletions[/]'
+        '[cyan {dim_i}]{i} insertions,[/] '
+        '[yellow {dim_u}]{u} updates,[/] '
+        '[red {dim_d}]{d} deletions[/]'
         '[/]'.format(
             dim_i='dim' if not i else '',
             dim_u='dim' if not u else '',
             dim_d='dim' if not d else '',
-            i=i,
-            u=u,
-            d=d,
+            i=str(i).rjust(2),
+            u=str(u).rjust(2),
+            d=str(d).rjust(2),
         ),
         ':rt',
     )
