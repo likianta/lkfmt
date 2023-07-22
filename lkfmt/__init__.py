@@ -4,4 +4,4 @@ from .formatter import fmt_all
 from .formatter import fmt_one
 from .formatter import fmt_one as fmt_file
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'

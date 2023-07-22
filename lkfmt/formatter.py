@@ -10,6 +10,7 @@ from lk_utils import fs
 from lk_utils import loads
 from lk_utils import xpath
 
+from . import lkflavored as lkf
 from .diff import T
 from .diff import stat_changes
 
@@ -19,23 +20,23 @@ lk_logger.setup(quiet=True, show_funcname=False, show_varnames=False)
 class Cache:
     _cache: dict  # dict[path, mtime]
     _file: str
-
+    
     def __init__(self):
         self._file = xpath('.cache.pkl')
         if os.path.exists(self._file):
             self._cache = loads(self._file)
         else:
             self._cache = {}
-
+    
     def get(self, path: str) -> t.Union[float, 0]:
         return self._cache.get(path, 0)
-
+    
     def set(self, path: str, mtime: float) -> None:
         self._cache[path] = mtime
-
+    
     def save(self) -> None:
         dumps(self._cache, self._file)
-
+    
     def disable(self) -> None:
         self._cache.clear()
         setattr(self, 'save', lambda: None)
@@ -55,7 +56,7 @@ def fmt_all(
 ) -> None:
     """
     reformat one or many python files in likianta flavored style.
-
+    
     kwargs:
         recursive (-r):
         inplace (-i):
@@ -74,10 +75,10 @@ def fmt_all(
     if backdoor.get('direct_to_fmt_file'):
         fmt_one(target, inplace, chdir)
         return
-
+    
     root: str
     files: t.List[str]
-
+    
     if target == '.':
         root = fs.abspath(os.getcwd())
     elif os.path.isdir(target):
@@ -88,7 +89,7 @@ def fmt_all(
         return
     else:
         raise ValueError(f'invalid target: {target}')
-
+    
     if no_cache:
         _cache.disable()
     if recursive:
@@ -111,11 +112,11 @@ def fmt_all(
     else:
         print('[green dim]no file modified[/]', ':rt')
         return
-
+    
     def estimate_best_column_width(files: t.List[str]) -> int:
         maxlen = max(map(len, map(fs.filename, files)))
         return min((maxlen, 80, lk_logger.console.console.width))
-
+    
     file_col_width = estimate_best_column_width(files)
     cnt = 0
     for f in files:
@@ -160,10 +161,10 @@ def fmt_one(
     assert file.endswith(('.py', '.txt'))
     if chdir:
         os.chdir(os.path.dirname(os.path.abspath(file)))
-
+    
     with open(file, 'r', encoding='utf-8') as f:
         code = origin_code = f.read()
-
+    
     code = black.format_str(
         code,
         mode=black.Mode(
@@ -191,15 +192,18 @@ def fmt_one(
             ignore_pass_statements=False,
             ignore_pass_after_docstring=False,
         )
-
+    
+    code = lkf.keep_indents_on_empty_lines(code)
+    code = lkf.ensure_trailing_newline(code)
+    
     if code == origin_code:
         print('[green dim]no code change[/]', ':rt')
         return code, (0, 0, 0)
-
+    
     if inplace:
         with open(file, 'w', encoding='utf-8') as f:
             f.write(code)
-
+    
     i, u, d = stat_changes(origin_code, code, verbose=False)
     print(
         '[green]reformat code done: '
