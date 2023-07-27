@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lkfmt"
-version = "0.3.0a0"
+version = "0.3.0a1"
 homepage = "https://github.com/likianta/lkfmt"
 description = "All-in-one Python code formattor which is tailored of `black` + `isort` + `autoflake` for myself taste."
 readme = "README.md"
@@ -12,10 +12,14 @@ python = "^3.8"
 argsense = "*"
 # argsense = { url = "http://likianta.pro:2006/argsense/argsense-1.0.0a16-py3-none-any.whl" }
 autoflake = "*"
+autopep8 = "*"
 black = "*"
 isort = "*"
 lk-logger = "*"
 lk-utils = "*"
+
+[tool.poetry.group.dev.dependencies]
+# ruff = "*"
 
 [[tool.poetry.source]]
 name = "tsinghua"
