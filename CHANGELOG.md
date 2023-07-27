@@ -6,6 +6,10 @@
     - keep indents on empty lines
     - ensure newline at end of file
 
+### 0.2.2 (2023-07-27)
+
+- minor adjust formatter rules
+
 ### 0.2.1 (2023-07-21)
 
 - no strip any import statement in `__init__.py`
