@@ -164,13 +164,22 @@ def fmt_one(
     with open(file, 'r', encoding='utf-8') as f:
         code = origin_code = f.read()
 
+    if not fs.filename(file) == '__init__.py':
+        code = autoflake.fix_code(
+            code,
+            ignore_init_module_imports=True,
+            ignore_pass_after_docstring=False,
+            ignore_pass_statements=False,
+            remove_all_unused_imports=True,
+        )
     code = black.format_str(
         code,
         mode=black.Mode(
             line_length=80,
-            string_normalization=False,
-            magic_trailing_comma=False,
+            # magic_trailing_comma=False,
+            magic_trailing_comma=True,
             preview=True,
+            string_normalization=False,
         ),
     )
     code = isort.code(
@@ -178,19 +187,15 @@ def fmt_one(
         config=isort.Config(
             case_sensitive=True,
             force_single_line=True,
+            honor_noqa=True,
             line_length=80,
+            lines_after_imports=-1,
+            lines_between_sections=1,
             only_modified=True,
             profile='black',
+            reverse_relative=True,
         ),
     )
-    if not fs.filename(file) == '__init__.py':
-        # we don't strip any import in `__init__.py`.
-        code = autoflake.fix_code(
-            code,
-            remove_all_unused_imports=True,
-            ignore_pass_statements=False,
-            ignore_pass_after_docstring=False,
-        )
 
     if code == origin_code:
         print('[green dim]no code change[/]', ':rt')
