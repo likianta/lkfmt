@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lkfmt"
-version = "0.3.0a1"
+version = "0.3.0a4"
 homepage = "https://github.com/likianta/lkfmt"
 description = "All-in-one Python code formattor which is tailored of `black` + `isort` + `autoflake` for myself taste."
 readme = "README.md"
@@ -15,10 +15,13 @@ autoflake = "*"
 autopep8 = "*"
 black = "*"
 isort = "*"
-lk-logger = "*"
-lk-utils = "*"
+libcst = "*"
+lk-logger = "^5.6.2"
+lk-utils = "^2.5.6"
+yapf = "^0.40"
 
 [tool.poetry.group.dev.dependencies]
+ipython = "*"
 # ruff = "*"
 
 [[tool.poetry.source]]

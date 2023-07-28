@@ -2,7 +2,6 @@ import os
 import typing as t
 
 import autoflake
-import autopep8
 import isort
 import lk_logger
 from lk_utils import dumps
@@ -69,10 +68,10 @@ def fmt_all(
             overwhelming your terminal.[/]
     """
     global _debug
-    if backdoor.get('debug'):
+    if backdoor.pop('debug', False):
         _debug = True
         print(f'{backdoor = }', ':v')
-    if backdoor.get('direct_to_fmt_file'):
+    if backdoor.pop('direct_to_fmt_file', False):
         fmt_one(target, inplace, chdir)
         return
     
@@ -120,7 +119,7 @@ def fmt_all(
     file_col_width = estimate_best_column_width(files)
     cnt = 0
     for f in files:
-        _, (i, u, d) = fmt_one(f, inplace, chdir, quiet=True)
+        _, (i, u, d) = fmt_one(f, inplace, chdir, quiet=True, **backdoor)
         if (i, u, d) != (0, 0, 0):
             cnt += 1
         print(
@@ -128,9 +127,8 @@ def fmt_all(
             '[green]reformat done: {} ({})[/]'.format(
                 fs.relpath(f, root).ljust(file_col_width),
                 (
-                    '[green dim]no code change[/]'
-                    if (i, u, d) == (0, 0, 0)
-                    else (
+                    '[green dim]no code change[/]' if
+                    (i, u, d) == (0, 0, 0) else (
                         '[cyan {dim_i}]{i} insertions,[/] '
                         '[yellow {dim_u}]{u} updates,[/] '
                         '[red {dim_d}]{d} deletions[/]'.format(
@@ -153,7 +151,11 @@ def fmt_all(
 
 
 def fmt_one(
-    file: str, inplace: bool = True, chdir: bool = False, quiet: bool = False
+    file: str,
+    inplace: bool = True,
+    chdir: bool = False,
+    quiet: bool = False,
+    formatter: t.Literal['autopep8', 'black', 'yapf'] = 'yapf',
 ) -> t.Tuple[str, T.Changes]:
     if quiet:
         lk_logger.mute()
@@ -165,23 +167,60 @@ def fmt_one(
     with open(file, 'r', encoding='utf-8') as f:
         code = origin_code = f.read()
     
-    code = autopep8.fix_code(
-        code,
-        encoding='utf-8',
-        options={
-            'experimental': True,
-            'max_line_length': 80,
-        }
-    )
-    # code = black.format_str(
-    #     code,
-    #     mode=black.Mode(
-    #         line_length=80,
-    #         string_normalization=False,
-    #         magic_trailing_comma=False,
-    #         preview=True,
-    #     ),
-    # )
+    if formatter == 'autopep8':
+        import autopep8
+        code = autopep8.fix_code(
+            code,
+            encoding='utf-8',
+            options={
+                'experimental': True,
+                'max_line_length': 80,
+            }
+        )
+    elif formatter == 'black':
+        import black
+        code = black.format_str(
+            code,
+            mode=black.Mode(
+                line_length=80,
+                string_normalization=False,
+                magic_trailing_comma=False,
+                preview=True,
+            ),
+        )
+    elif formatter == 'yapf':
+        import yapf
+        code, _ = yapf.yapf_api.FormatCode(
+            code,
+            filename=fs.filename(file),
+            style_config={
+                'ALIGN_CLOSING_BRACKET_WITH_VISUAL_INDENT': True,
+                'ALLOW_MULTILINE_DICTIONARY_KEYS': True,
+                'ALLOW_MULTILINE_LAMBDAS': True,
+                'ALLOW_SPLIT_BEFORE_DICT_VALUE': False,
+                'ARITHMETIC_PRECEDENCE_INDICATION': True,
+                'BLANK_LINE_BEFORE_NESTED_CLASS_OR_DEF': True,
+                # 'COALESCE_BRACKETS': True,
+                'COLUMN_LIMIT': 80,
+                'DEDENT_CLOSING_BRACKETS': True,
+                'EACH_DICT_ENTRY_ON_SEPARATE_LINE': False,
+                'INDENT_BLANK_LINES': True,
+                'INDENT_DICTIONARY_VALUE': True,
+                'JOIN_MULTIPLE_LINES': True,
+                'SPACE_BETWEEN_ENDING_COMMA_AND_CLOSING_BRACKET': True,
+                'SPACES_BEFORE_COMMENT': 2,
+                'SPLIT_BEFORE_ARITHMETIC_OPERATOR': True,
+                'SPLIT_BEFORE_BITWISE_OPERATOR': True,
+                'SPLIT_BEFORE_DICT_SET_GENERATOR': True,
+                'SPLIT_BEFORE_DOT': True,
+                # 'SPLIT_BEFORE_EXPRESSION_AFTER_OPENING_PAREN': True,
+                'SPLIT_BEFORE_LOGICAL_OPERATOR': False,
+                'SPLIT_COMPLEX_COMPREHENSION': True,
+            }
+        )
+    else:
+        raise Exception(formatter)
+    
     code = isort.code(
         code,
         config=isort.Config(
