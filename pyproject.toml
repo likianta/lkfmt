@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lkfmt"
-version = "0.3.0a4"
+version = "0.3.0a8"
 homepage = "https://github.com/likianta/lkfmt"
 description = "All-in-one Python code formattor which is tailored of `black` + `isort` + `autoflake` for myself taste."
 readme = "README.md"
