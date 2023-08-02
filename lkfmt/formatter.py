@@ -155,7 +155,7 @@ def fmt_one(
     inplace: bool = True,
     chdir: bool = False,
     quiet: bool = False,
-    formatter: t.Literal['autopep8', 'black', 'yapf'] = 'yapf',
+    formatter: t.Literal['autopep8', 'black', 'yapf'] = 'black',
 ) -> t.Tuple[str, T.Changes]:
     if quiet:
         lk_logger.mute()
@@ -184,7 +184,7 @@ def fmt_one(
             mode=black.Mode(
                 line_length=80,
                 string_normalization=False,
-                magic_trailing_comma=False,
+                magic_trailing_comma=True,
                 preview=True,
             ),
         )
