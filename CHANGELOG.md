@@ -2,9 +2,11 @@
 
 ### 0.3.0 (wip)
 
-- some simple features in `lk-flavor` are implemented
-    - keep indents on empty lines
+- alternative formatter engine
+- lk-flavor features
     - ensure newline at end of file
+    - keep indents on empty lines
+    - no heavy single line
 
 ### 0.2.2 (2023-07-27)
 

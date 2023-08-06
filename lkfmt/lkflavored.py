@@ -1,8 +1,11 @@
 import re
-import string
 import typing as t
+from textwrap import dedent
+from textwrap import indent
 
-_re_spaces = re.compile(r'^ +')
+import black
+
+_re_leading_spaces = re.compile(r'^ *')
 
 
 def ensure_trailing_newline(code: str) -> str:
@@ -58,83 +61,56 @@ def no_heavy_single_line(code: str) -> str:
     """
     
     def walk() -> t.Iterator[str]:
+        line: int
         prev: str
         curr: str
         next: str
         
-        def is_heavy_quoted_line() -> bool:
-            if prev.endswith('(') and next.lstrip().startswith(')'):
-                if len(curr) > 70:
-                    if curr.strip().startswith(('"', "'")) and curr.endswith(
-                        ('",', "',", '"', "'")
-                    ):
-                        if len(prev.strip()) < 10 or len(next.strip()) < 40:
-                            return True
-            return False
-        
         def is_heavy_line() -> bool:
-            if prev.endswith('(') and next.strip().startswith(')'):
-                if len(curr) > 70:
-                    if len(prev) < 40 and len(next) < 10:
+            if prev.endswith('(') and next.lstrip().startswith(')'):
+                if len(curr) > 70 and len(curr.strip()) > 40:
+                    if len(prev.strip()) < 10 and len(next.strip()) < 10:
                         return True
             return False
         
-        def find_proper_split_point(
-            text: str, limit_steps: int
-        ) -> t.Optional[int]:
-            # find a better split point, for example a \
-            # whitespace.
-            i: int
-            for i, (a, b) in enumerate(_continous_window([x for x in text], 2)):
-                if a == ' ':
-                    return i + 1
-                if a in string.punctuation:
-                    if b == ' ':
-                        return i + 2
-                    else:
-                        return i + 1
-                if i > limit_steps:
-                    return None
-            return None
+        is_processing = True
         
-        is_analysing = True
-        
-        for prev, curr, next in _continous_window(
-            code.splitlines(), 3, prepad=1
+        for line, (prev, curr, next) in enumerate(
+            _continous_window(code.splitlines(), 3, prepad=1)
         ):
-            # print(':vi2', curr)
-            if is_analysing and curr.endswith(('"""', "'''")):
-                is_analysing = False
+            if is_processing and curr.endswith(('"""', "'''")):
+                is_processing = False
                 yield curr
                 continue
-            if not is_analysing:
+            if not is_processing:
                 if curr.startswith(('"""', "'''")):
-                    is_analysing = True
+                    is_processing = True
                 yield curr
                 continue
             
-            if (is_quoted := is_heavy_quoted_line()) or is_heavy_line():
-                print('detected heavy line', curr, ':vi2')
-                mid = len(curr) // 2
-                if i := find_proper_split_point(curr[mid:], 10):
-                    split_point = mid + i
-                # find in reverse direction.
-                elif j := find_proper_split_point(curr[mid - 10 :], 10):
-                    split_point = mid - (10 - j)
-                else:
-                    if is_quoted:
-                        # remain using the original split point.
-                        split_point = mid
-                    else:
-                        yield curr
-                        continue
-                if is_quoted:
-                    quote = curr.lstrip()[0]
-                    yield curr[:split_point] + quote
-                    yield _keep_indent(quote + curr[split_point:], curr)
-                else:
-                    yield curr[:split_point]
-                    yield _keep_indent(curr[split_point:], curr)
+            if is_heavy_line():
+                print(
+                    ':i2sv',
+                    'detected heavy line',
+                    _re_leading_spaces.sub(
+                        lambda m: m.group().replace(' ', '.'), curr
+                    ),
+                )
+                snippet = black.format_str(
+                    'foo(\n    {}\n)'.format(curr.lstrip()),
+                    mode=black.Mode(
+                        line_length=50,
+                        string_normalization=False,
+                        magic_trailing_comma=True,
+                        preview=True,
+                    ),
+                )
+                snippet = snippet.splitlines()[1:-1]
+                snippet = indent(
+                    dedent('\n'.join(snippet)),
+                    _re_leading_spaces.match(curr).group(),
+                )
+                yield snippet
             else:
                 yield curr
     
@@ -145,9 +121,7 @@ def no_heavy_single_line(code: str) -> str:
 
 
 def _keep_indent(target: str, base: str) -> str:
-    if base.startswith(' '):
-        return _re_spaces.match(base).group() + target
-    return target
+    return _re_leading_spaces.match(base).group() + target
 
 
 def _window(
