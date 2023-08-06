@@ -14,6 +14,47 @@ def ensure_trailing_newline(code: str) -> str:
     return code
 
 
+def join_oneline_if_stmt(code: str) -> str:
+    """
+    before:
+        if x:
+            return 1
+    after:
+        if x: return 1
+    """
+    
+    def walk() -> t.Iterator[str]:
+        flag = False
+        for l0, l1, l2, l3, l4 in _continous_window(
+            code.splitlines(), 5
+        ):
+            if flag:
+                flag = False
+                continue
+            if l0.lstrip().startswith('if '):
+                if l1 and len(l1) < 20 and not l1.lstrip().startswith('if '):
+                    i0, i1, i2, i3, i4 = tuple(
+                        map(len, (
+                            _re_leading_spaces.match(x).group()
+                            for x in (l0, l1, l2, l3, l4)
+                        ))
+                    )
+                    if i0 < i1:
+                        if (
+                            (l2 and i2 < i1) or
+                            (l3 and i3 < i1) or
+                            (l4 and i4 < i1)
+                        ):
+                            out = '{} {}'.format(l0, l1.lstrip())
+                            if len(out) < 80:
+                                flag = True
+                                yield out
+                                continue
+            yield l0
+            
+    return '\n'.join(walk())
+
+
 def keep_indents_on_empty_lines(code: str) -> str:
     """
     before:             |   after:

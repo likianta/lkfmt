@@ -258,6 +258,7 @@ def fmt_one(
     else:
         raise Exception(formatter)
     
+    code = lkf.join_oneline_if_stmt(code)
     code = lkf.no_heavy_single_line(code)
     code = lkf.keep_indents_on_empty_lines(code)
     code = lkf.ensure_trailing_newline(code)
