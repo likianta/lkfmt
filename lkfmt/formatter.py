@@ -167,6 +167,30 @@ def fmt_one(
     with open(file, 'r', encoding='utf-8') as f:
         code = origin_code = f.read()
     
+    # remove unused imports
+    if not fs.filename(file) == '__init__.py':
+        # we don't strip any import in `__init__.py`.
+        code = autoflake.fix_code(
+            code,
+            remove_all_unused_imports=True,
+            ignore_pass_statements=False,
+            ignore_pass_after_docstring=False,
+        )
+    
+    # sort imports
+    code = isort.code(
+        code,
+        config=isort.Config(
+            case_sensitive=True,
+            force_single_line=True,
+            line_length=80,
+            only_modified=True,
+            profile='black',
+            reverse_relative=True,
+        ),
+    )
+    
+    # main format code
     if formatter == 'autopep8':
         import autopep8
         code = autopep8.fix_code(
@@ -229,26 +253,6 @@ def fmt_one(
         )
     else:
         raise Exception(formatter)
-    
-    code = isort.code(
-        code,
-        config=isort.Config(
-            case_sensitive=True,
-            force_single_line=True,
-            line_length=80,
-            only_modified=True,
-            profile='black',
-            reverse_relative=True,
-        ),
-    )
-    if not fs.filename(file) == '__init__.py':
-        # we don't strip any import in `__init__.py`.
-        code = autoflake.fix_code(
-            code,
-            remove_all_unused_imports=True,
-            ignore_pass_statements=False,
-            ignore_pass_after_docstring=False,
-        )
     
     code = lkf.keep_indents_on_empty_lines(code)
     code = lkf.ensure_trailing_newline(code)
