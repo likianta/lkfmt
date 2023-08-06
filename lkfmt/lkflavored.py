@@ -73,18 +73,24 @@ def no_heavy_single_line(code: str) -> str:
                         return True
             return False
         
+        def is_triple_quotes() -> bool:
+            # this is not a strict check, but it's enough for now.
+            return (curr.lstrip().startswith(('"""', "'''")) or
+                    curr.endswith(('"""', "'''")))  # fmt:skip
+        
         is_processing = True
         
         for line, (prev, curr, next) in enumerate(
             _continous_window(code.splitlines(), 3, prepad=1)
         ):
-            if is_processing and curr.endswith(('"""', "'''")):
-                is_processing = False
+            if curr.lstrip().startswith('#'):
+                yield curr
+                continue
+            if is_triple_quotes():
+                is_processing = not is_processing
                 yield curr
                 continue
             if not is_processing:
-                if curr.startswith(('"""', "'''")):
-                    is_processing = True
                 yield curr
                 continue
             
