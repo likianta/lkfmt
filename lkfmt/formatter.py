@@ -127,8 +127,9 @@ def fmt_all(
             '[green]reformat done: {} ({})[/]'.format(
                 fs.relpath(f, root).ljust(file_col_width),
                 (
-                    '[green dim]no code change[/]' if
-                    (i, u, d) == (0, 0, 0) else (
+                    '[green dim]no code change[/]'
+                    if (i, u, d) == (0, 0, 0)
+                    else (
                         '[cyan {dim_i}]{i} insertions,[/] '
                         '[yellow {dim_u}]{u} updates,[/] '
                         '[red {dim_d}]{d} deletions[/]'.format(
@@ -193,16 +194,18 @@ def fmt_one(
     # main format code
     if formatter == 'autopep8':
         import autopep8
+        
         code = autopep8.fix_code(
             code,
             encoding='utf-8',
             options={
                 'experimental': True,
                 'max_line_length': 80,
-            }
+            },
         )
     elif formatter == 'black':
         import black
+        
         code = black.format_str(
             code,
             mode=black.Mode(
@@ -214,6 +217,7 @@ def fmt_one(
         )
     elif formatter == 'yapf':
         import yapf
+        
         code, _ = yapf.yapf_api.FormatCode(
             code,
             filename=fs.filename(file),
@@ -249,11 +253,12 @@ def fmt_one(
                 'SPLIT_BEFORE_FIRST_ARGUMENT': True,
                 'SPLIT_BEFORE_LOGICAL_OPERATOR': False,
                 'SPLIT_COMPLEX_COMPREHENSION': True,
-            }
+            },
         )
     else:
         raise Exception(formatter)
     
+    code = lkf.no_heavy_single_line(code)
     code = lkf.keep_indents_on_empty_lines(code)
     code = lkf.ensure_trailing_newline(code)
     
