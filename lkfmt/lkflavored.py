@@ -4,8 +4,35 @@ from textwrap import dedent
 from textwrap import indent
 
 import black
+import libcst as cst
 
 _re_leading_spaces = re.compile(r'^ *')
+
+
+def fixture(code: str):
+    module = cst.parse_module(code)
+    
+    _flag = 'ready'
+    _indent = -1
+    
+    def walk(node):
+        nonlocal _flag, _indent
+        _indent += 1
+        
+        for item in node.body:
+            if isinstance(item, cst.Import):
+                _flag = 'observing_imports'
+            else:
+                if _flag == 'observing_imports':
+                    if item.leading_lines:
+                        # there are blank line(s) between imports and other \
+                        # statements.
+                        _flag = 'ready'
+        
+        _indent -= 1
+    
+    for item in module.body:
+        pass
 
 
 def ensure_trailing_newline(code: str) -> str:
@@ -25,25 +52,26 @@ def join_oneline_if_stmt(code: str) -> str:
     
     def walk() -> t.Iterator[str]:
         flag = False
-        for l0, l1, l2, l3, l4 in _continous_window(
-            code.splitlines(), 5
-        ):
+        for l0, l1, l2, l3, l4 in _continous_window(code.splitlines(), 5):
             if flag:
                 flag = False
                 continue
             if l0.lstrip().startswith('if '):
                 if l1 and len(l1) < 20 and not l1.lstrip().startswith('if '):
                     i0, i1, i2, i3, i4 = tuple(
-                        map(len, (
-                            _re_leading_spaces.match(x).group()
-                            for x in (l0, l1, l2, l3, l4)
-                        ))
+                        map(
+                            len,
+                            (
+                                _re_leading_spaces.match(x).group()
+                                for x in (l0, l1, l2, l3, l4)
+                            ),
+                        )
                     )
                     if i0 < i1:
                         if (
-                            (l2 and i2 < i1) or
-                            (l3 and i3 < i1) or
-                            (l4 and i4 < i1)
+                            (l2 and i2 < i1)
+                            or (l3 and i3 < i1)
+                            or (l4 and i4 < i1)
                         ):
                             out = '{} {}'.format(l0, l1.lstrip())
                             if len(out) < 80:
@@ -51,7 +79,7 @@ def join_oneline_if_stmt(code: str) -> str:
                                 yield out
                                 continue
             yield l0
-            
+    
     return '\n'.join(walk())
 
 
@@ -143,15 +171,19 @@ def no_heavy_single_line(code: str) -> str:
                         lambda m: m.group().replace(' ', '.'), curr
                     ),
                 )
-                snippet = black.format_str(
-                    'foo(\n    {}\n)'.format(curr.lstrip()),
-                    mode=black.Mode(
-                        line_length=50,
-                        string_normalization=False,
-                        magic_trailing_comma=True,
-                        preview=True,
-                    ),
-                )
+                try:
+                    snippet = black.format_str(
+                        'foo(\n    {}\n)'.format(curr.lstrip()),
+                        mode=black.Mode(
+                            line_length=50,
+                            string_normalization=False,
+                            magic_trailing_comma=True,
+                            preview=True,
+                        ),
+                    )
+                except Exception:
+                    yield curr
+                    continue
                 snippet = snippet.splitlines()[1:-1]
                 snippet = indent(
                     dedent('\n'.join(snippet)),
@@ -183,11 +215,9 @@ def _window(
     seq_fill = [None] * prepad + seq.copy() + [None] * n
     for i in range(0, len(seq_fill), n):
         win = seq_fill[i : i + n]
-        if all(x is None for x in win):
-            break
+        if all(x is None for x in win): break
         yield (x or '' for x in win)
-        if win[-1] is None:
-            break
+        if win[-1] is None: break
 
 
 def _continous_window(
@@ -202,7 +232,6 @@ def _continous_window(
     seq_fill = [None] * prepad + seq.copy() + [None] * n
     for i in range(0, len(seq_fill)):
         win = seq_fill[i : i + n]
-        if all(x is None for x in win):
-            break
+        if all(x is None for x in win): break
         # at least one element is not None in `win`.
         yield (x or '' for x in win)
